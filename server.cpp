@@ -37,34 +37,67 @@
 
 #define PORT "3490"
 #define BACKLOG 10
+#define MAXDATASIZE 100
 
 // Helper function to get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-  if (sa->sa_family == AF_INET) {
-    return &(((struct sockaddr_in*)sa)->sin_addr);
+void *get_in_addr(struct sockaddr *sa)
+{
+  if (sa->sa_family == AF_INET)
+  {
+    return &(((struct sockaddr_in *)sa)->sin_addr);
   }
-  return &(((struct sockaddr_in6*)sa)->sin6_addr);
+  return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
 // Function to handle a single client connection in its own thread
-void handle_client(int new_fd, struct sockaddr_storage their_addr) {
-// A temporary buffer for the client's IP address string
+void handle_client(int new_fd, struct sockaddr_storage their_addr)
+{
+  // A temporary buffer for the client's IP address string
   char s[INET6_ADDRSTRLEN];
   inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
   std::cout << "server: got connection from " << s << std::endl;
+  int numbytes;
 
-// Send the message to the client
+  // Send the message to the client
   const char *msg = "Hello, world!";
-  if (send(new_fd, msg, strlen(msg), 0) == -1) {
+  if (send(new_fd, msg, strlen(msg), 0) == -1)
+  {
     perror("send");
   }
 
-// Close the socket for this connection
+  char buf[MAXDATASIZE];
+  for (;;)
+  {
+    int numbytes = recv(new_fd, buf, MAXDATASIZE - 1, 0);
+    if (numbytes == 0)
+    {
+      // client closed
+      break;
+    }
+    if (numbytes < 0)
+    {
+      perror("recv");
+      break;
+    }
+    buf[numbytes] = '\0';
+    buf[strcspn(buf, "\r\n")] = '\0'; // Strip newline characters
+    if(strcmp(buf, "BYE") == 0) {
+      printf("server: received BYE, closing connection\n");
+      break;
+    }
+    printf("server: received '%s'\n", buf);
+
+    // optional echo back
+    // if (send(new_fd, buf, numbytes, 0) == -1) perror("send");
+  }
+
+  // Close the socket for this connection
   close(new_fd);
   std::cout << "server: connection with " << s << " closed." << std::endl;
 }
 
-int main() {
+int main()
+{
   int sockfd, new_fd;
   struct addrinfo hints, *servinfo, *p;
   struct sockaddr_storage their_addr;
@@ -77,55 +110,64 @@ int main() {
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
+  {
     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-  return 1;
+    return 1;
   }
 
-  for(p = servinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+  for (p = servinfo; p != NULL; p = p->ai_next)
+  {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+    {
       perror("server: socket");
       continue;
-  }
-  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-    perror("setsockopt");
-    exit(1);
-  }
+    }
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+    {
+      perror("setsockopt");
+      exit(1);
+    }
 
-  if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-    close(sockfd);
-    perror("server: bind");
-    continue;
-  }
-  break;
+    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+    {
+      close(sockfd);
+      perror("server: bind");
+      continue;
+    }
+    break;
   }
   freeaddrinfo(servinfo);
 
-  if (p == NULL) {
+  if (p == NULL)
+  {
     fprintf(stderr, "server: failed to bind\n");
     exit(1);
   }
-  if (listen(sockfd, BACKLOG) == -1) {
+  if (listen(sockfd, BACKLOG) == -1)
+  {
     perror("listen");
     exit(1);
-}
+  }
   std::cout << "server: waiting for connections..." << std::endl;
 
-  while (true) {
-  sin_size = sizeof their_addr;
-  new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+  while (true)
+  {
+    sin_size = sizeof their_addr;
+    new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
 
-  if (new_fd == -1) {
-    perror("accept");
-    continue;
+    if (new_fd == -1)
+    {
+      perror("accept");
+      continue;
+    }
+
+    // Create a new thread to handle the accepted connection
+    // std::jthread automatically joins upon destruction
+    std::jthread(handle_client, new_fd, their_addr);
   }
 
-// Create a new thread to handle the accepted connection
-// std::jthread automatically joins upon destruction
-       std::jthread(handle_client, new_fd, their_addr);
-}
-
-// The main loop will never exit, so this is unreachable.
+  // The main loop will never exit, so this is unreachable.
   close(sockfd);
   return 0;
 }
