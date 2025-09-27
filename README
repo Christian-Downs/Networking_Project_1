@@ -1,0 +1,29 @@
+README
+
+CS447 FALL 2025 P1 : Online Course Registration System
+======================================================
+Author: Thoshitha Gamage
+Date: January 29, 2025
+
+Overview:
+  <Briefly describe the purpose of the project>
+
+Directory Structure of the Tarball: <a sample provided below. Modify it as you see fit>
+
+  starter-code/:
+    |- server.cpp: Starter code for the server application.
+    |- Makefile: Makefile to compile the server and client applications.
+    |- server.conf: Configuration file for the server (fill in the port number before running).
+    |- courses.db: A sample Text-based database for testing
+    |- p1_helper.h: Header file for the helper function to load courses database.
+    |- p1_helper.cpp: Implementation of the helper function. Implement the stub functionality.
+
+Compilation:
+  <Provide clear and complete instructions on how to compile and run your code. This should also include manual compilation instructions
+  if make fails>
+
+How to Run:
+  <order in which the your solution should be run for testing along with any assumption. >
+
+Notes and Design Choices:
+  <Explain any key design choices or challenges you faced. Mention any unimplemented or buggy features>
