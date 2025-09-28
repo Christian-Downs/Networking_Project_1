@@ -5,18 +5,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string>
+
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <string.h>
 
 #include <arpa/inet.h>
 
 #define PORT "3490" // the port client will be connecting to 
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once 
+#define MAXDATASIZE 1000 // max number of bytes we can get at once 
+using namespace std;
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -26,6 +30,60 @@ void *get_in_addr(struct sockaddr *sa)
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+
+
+void sendToServer(int socket, string message){
+    string msg_str = message;
+    const char *msg = msg_str.c_str();
+    if (send(socket, msg, strlen(msg), 0) == -1)
+    {
+        perror("send");
+        close(socket);
+        return;
+    }
+    int numbytes;
+    char buf[MAXDATASIZE];
+
+    if ((numbytes = recv(socket, buf, MAXDATASIZE - 1, 0)) == -1)
+    {
+        perror("recv");
+        exit(1);
+    }
+
+    buf[numbytes] = '\0';
+
+    printf("client: received '%s'\n", buf);
+}
+
+
+void testServer(int socket){
+
+    sendToServer(socket, "IAM Christian");
+    sendToServer(socket, "CATALOG");
+    sendToServer(socket, "BOBS BURGERS");
+
+    sendToServer(socket, "SEARCH subject Chemistry");
+    sendToServer(socket, "SEARCH subject BLA");
+
+    sendToServer(socket, "LIST");
+    sendToServer(socket, "LIST subject Chemistry");
+
+    sendToServer(socket, "SHOW MATH250 availability");
+    sendToServer(socket, "SHOW MATH777777 availability");
+    sendToServer(socket, "SHOW CS201");
+    sendToServer(socket, "ENROLLMENT");
+    
+    sleep(10);
+
+    sendToServer(socket, "ENROLL CS201");
+    sendToServer(socket, "ENROLL ART100");
+    sendToServer(socket, "ENROLL ART205");
+    sendToServer(socket, "MYCOURSES");
+    sendToServer(socket, "LIST");
+    sendToServer(socket, "VIEWGRADES");
+    sendToServer(socket, "BYE");
 }
 
 int main(int argc, char *argv[])
@@ -50,6 +108,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    char *msg = "Hello, world!";
+
     // loop through all the results and connect to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
@@ -63,16 +123,16 @@ int main(int argc, char *argv[])
             s, sizeof s);
         printf("client: attempting connection to %s\n", s);
 
-        char *msg = "Hello, world!";
-        if(send(sockfd, msg, strlen(msg), 0) == -1) {
-            perror("send");
-        }
-
-        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+        {
             perror("client: connect");
             close(sockfd);
             continue;
         }
+
+
+        testServer(sockfd);
+
 
         break;
     }

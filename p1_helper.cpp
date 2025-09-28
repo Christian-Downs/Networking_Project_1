@@ -10,6 +10,7 @@
 #include "p1_helper.h"
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <algorithm>
 
 /**
@@ -114,17 +115,15 @@ std::vector<Course> load_courses_from_db(const std::string &filename)
  * @param search_term The term to search for.
  * @return A vector of matching Course structs.
  */
-std::vector<Course> search_courses(const std::vector<Course> &courses, const std::string &filter, const std::string &search_term)
+std::vector<Course> search_courses(const std::vector<Course> &courses, const std::string &filter = "ALL", const std::string &search_term ="")
 {
     std::vector<Course> results;
     for (const auto &course : courses)
     {
         if ((filter == "subject" && (course.subject.find( search_term)) != std::string::npos) ||
             (filter == "instructor" && (course.instructor.find( search_term)) != std::string::npos)  ||
-            (filter == "course-code" &&(course.course_code.find( search_term)) != std::string::npos) ||
-            (filter == "title" && (course.title.find( search_term)) != std::string::npos)  ||
-            (filter == "description" && (course.description.find( search_term)) != std::string::npos) ||
-            (filter == "prerequisites" && std::find(course.prerequisites.begin(), course.prerequisites.end(), search_term) != course.prerequisites.end())
+            (filter == "course-code" && (course.course_code.find( search_term)) != std::string::npos) ||
+            filter == "ALL"
         )
         {
             results.push_back(course);
@@ -150,7 +149,9 @@ Course get_course_by_code(const std::vector<Course> &courses, const std::string 
             return course;
         }
     }
-    return {};
+    Course notFound;
+    notFound.title = "NOT FOUND";
+    return notFound;
 }
 
 /**
@@ -231,5 +232,8 @@ bool check_prerequisites(const std::vector<Course> &enrolled_courses, const Cour
     }
     return true;
 }
+
+
+
 
 
