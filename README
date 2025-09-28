@@ -2,28 +2,33 @@ README
 
 CS447 FALL 2025 P1 : Online Course Registration System
 ======================================================
-Author: Thoshitha Gamage
-Date: January 29, 2025
+Author: Christian Downs
+Date: September 27th, 2025
 
 Overview:
-  <Briefly describe the purpose of the project>
+  Created a simple server that allows for enrollment and exploration of classes in our local database. This uses jthreads in order to allow multiple clients. For a full description of entire project view [Protocol-Specifiactions](./Protocol-Specifiactions.pdf). This project is an expansion of [beej simple stream server](https://beej.us/guide/bgnet/html/#datagram:~:text=the%20next%20section.-,6.1%20A%20Simple%20Stream%20Server,-All%20this%20server).
 
-Directory Structure of the Tarball: <a sample provided below. Modify it as you see fit>
+Directory Structure of the Project:
 
-  starter-code/:
-    |- server.cpp: Starter code for the server application.
-    |- Makefile: Makefile to compile the server and client applications.
-    |- server.conf: Configuration file for the server (fill in the port number before running).
-    |- courses.db: A sample Text-based database for testing
-    |- p1_helper.h: Header file for the helper function to load courses database.
-    |- p1_helper.cpp: Implementation of the helper function. Implement the stub functionality.
+Protocol-Project/:<br>
+  &emsp;|- server.cpp: Starter code for the server application.<br>
+  &emsp;|- Makefile: Makefile to compile the server and client applications.<br>
+  &emsp;|- server.conf: Configuration file for the server (fill in the port number before running).<br>
+  &emsp;|- courses.db: A sample Text-based database for testing<br>
+  &emsp;|- p1_helper.h: Header file for the helper function to load courses database.<br>
+  &emsp;|- p1_helper.cpp: Implementation of the helper function. Implement the stub functionality.<br>
 
-Compilation:
-  <Provide clear and complete instructions on how to compile and run your code. This should also include manual compilation instructions
-  if make fails>
+Compilation: <br>
+&emsp; Once project is downloaded into a linux server just run this in the terminal
+```
+  >make compile
+```
+&emsp; To communicate with the server you can use many services but I used [telnet](https://www.geeksforgeeks.org/computer-networks/introduction-to-telnet/)
 
-How to Run:
-  <order in which the your solution should be run for testing along with any assumption. >
 
-Notes and Design Choices:
-  <Explain any key design choices or challenges you faced. Mention any unimplemented or buggy features>
+Notes and Design Choices:<br>
+<div style="padding-left: 1em">
+    A big challenge I had to solve was allowing for multiple clients to run at the same time! I was able to solve this by detaching the jthreads from my main thread.<br>
+    Another interesting problem was with string manipulation in c++, as there is no split so I used erase to gather all the information from the commands.
+</div>
+
