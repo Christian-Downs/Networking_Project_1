@@ -122,6 +122,49 @@ int message_handler(int pid, string message, string &mode, vector<Course> &cours
       send_back(pid, "200 BYE");
       return 0;
     }
+    else if (message == "HELP")
+    {
+      stringstream output;
+      output << "200 Possible Commands: " << endl;
+      if (mode == "ENROLLMENT")
+      {
+        output << "\tENROLL <course_code> - This command enrolls a client in a course. The server replies with 250 on success, 403 if the course is full, or 404 if the course is not found. Prerequisites for a course are considered met if prerequisite course(s) are listed in the current enrollment history." << endl;
+        output << "\tDROP <course_code> - This command allows a client to drop a course. The server replies with 250 on success or 404 if the course was not enrolled by the client. Dropping a course removes it from the student\’s active enrollment." << endl;
+      }
+      else if (mode == "CATALOG")
+      {
+        output << "\tLIST [filter] - The LIST command lists all available courses, optionally filtered by subject, instructor, or course - code.The server replies with 250 and the list of courses, or 304 if no courses are available." << endl;
+        output << "\tSEARCH <filter> <search-term> - The SEARCH command searches for courses by a specified <filter> (subject, instructor, or course-code) and <search-term>. The server replies with 250 and a list of matching courses, or 304 if none are found." << endl;
+        output << "\tSHOW <course_code> [availability] - The SHOW command displays details for a specific course. When the optional [availability] argument is included, the server should only list the course\’s availability status and the number of available seats. Without the optional argument, the server should provide the full course description. The server replies with 250 and the requested details, or 404 if the course is not found." << endl;
+      }
+      else if (mode == "MYCOURSES")
+      {
+        output << "\tLIST - This command displays the student\’s current enrollment (and by that virtue the history). The server replies with 250 and the list of courses, or 304 if no courses are found." << endl;
+        output << "\tVIEWGRADES - This command shows the student\’s grades for completed courses. The server replies with 250 or 304 if no grades are available." << endl;
+      }
+      else
+      {
+        output << "\tCATALOG - This command enables clients to access the course catalog. Success is acknowledged by server reply code is 210. " << endl;
+        output << "\tENROLLMENT - This command allows clients to enroll in or drop courses. The server\’s reply code is 220. " << endl;
+        output << "\tMYCOURSES - This mode provides clients with functionalities to manage their academic schedules. The correct server reply code is 230. " << endl;
+        output << "\tBYE - This command closes the connection and requests a graceful exit. The server\’s reply code is 200." << endl;
+        send_back(pid, output.str());
+        return 1;
+      }
+
+      
+      output << endl
+             << "SWITCH MODE:" << endl;
+      output << (mode == "CATALOG" ? "" : "\tCATALOG - This command enables clients to access the course catalog. Success is acknowledged by server reply code is 210. \n");
+      output << (mode == "ENROLLMENT" ? "" : "\tENROLLMENT - This command allows clients to enroll in or drop courses. The server\’s reply code is 220. \n");
+      output << (mode == "MYCOURSES" ? "" : "\tMYCOURSES - This mode provides clients with functionalities to manage their academic schedules. The correct server reply code is 230. \n");
+      output
+          << endl
+          << "\tBYE - This command closes the connection and requests a graceful exit. The server\’s reply code is 200." << endl;
+
+      send_back(pid, output.str());
+      return 1;
+    }
     else if (message == "CATALOG")
     {
       mode = "CATALOG";
@@ -211,13 +254,15 @@ int message_handler(int pid, string message, string &mode, vector<Course> &cours
       }
       else if (mode == "MYCOURSES")
       {
-        if(enrollmentHistory.size() == 0){
+        if (enrollmentHistory.size() == 0)
+        {
           send_back(pid, "304 NO CONTENT you haven't enrolled in any classes!");
           return 1;
         }
         stringstream output;
-        output << "250 Enrollment Histroy:" <<endl;
-        for(string course : enrollmentHistory){
+        output << "250 Enrollment Histroy:" << endl;
+        for (string course : enrollmentHistory)
+        {
           output << "\t" << course << endl;
         }
         send_back(pid, output.str());
@@ -282,10 +327,11 @@ int message_handler(int pid, string message, string &mode, vector<Course> &cours
         return 1;
       }
       string course_code;
-      message.erase(0, message.find(" ")+1);
+      message.erase(0, message.find(" ") + 1);
       course_code = message;
       Course course = get_course_by_code(courses, course_code);
-      if(course.title == "NOT FOUND"){
+      if (course.title == "NOT FOUND")
+      {
         send_back(pid, "404 NOT FOUND. Course Not Found.");
         return 1;
       }
@@ -302,7 +348,7 @@ int message_handler(int pid, string message, string &mode, vector<Course> &cours
         }
         if (!found)
         {
-          send_back(pid,"403 FORBIDDEN. Prerequisites not met.");
+          send_back(pid, "403 FORBIDDEN. Prerequisites not met.");
           return 1;
         }
       }
@@ -446,8 +492,6 @@ map<string, string> read_config_file(string fileName)
   }
   return configMap;
 }
-
-
 
 int main(int argumentCount, char *argumentArray[])
 {
